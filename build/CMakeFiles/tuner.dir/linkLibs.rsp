@@ -1,1 +1,0 @@
- external/raylib/raylib/libraylib.a external/portaudio/libportaudio.a -lopengl32 -lglu32 -lwinmm -ldsound -lole32 -luuid -lsetupapi -lole32 -luuid -lsetupapi -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 

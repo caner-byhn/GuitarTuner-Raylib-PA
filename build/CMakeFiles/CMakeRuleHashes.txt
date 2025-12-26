@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+8ee7b9b3e8be582755350adb5403e117 external/portaudio/CMakeFiles/uninstall
+7ba42a111c42d6bf5400b903256b37f6 external/raylib/raylib/external/glfw/src/CMakeFiles/update_mappings

@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 option(PRODUCTION_BUILD "Make this a production build" OFF)
 
-project(txt_editor)
+project(tuner)
 
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(external/raylib)

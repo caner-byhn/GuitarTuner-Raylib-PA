@@ -1,9 +1,10 @@
 #include <iostream>
 #include <cstdint>
 #include <vector>
+#include <algorithm>
 #include <math.h>
-#include <portaudio.h>
-#include <autocorrelation.h>
+#include "autocorrelation.h"
+#include "portaudio.h"
 
 
 // Take a window of samples.
@@ -14,9 +15,16 @@
 // Peaks in this curve indicate repeating periods in the signal.
 
 // We want to normalize the sum
+AudioWindow::AudioWindow(size_t windowSize) : writeIndex(0), size(windowSize) {
+    data = new float[size]();
+}
+
+AudioWindow::~AudioWindow(){
+    delete[] data;
+}
 
 
-float autocorrelation(const std::vector<float>& samples, uint32_t sampleRate) {
+float autocorrelation(const float* samples, size_t windowSize, uint32_t sampleRate) {
     float minFreq = 60.0f;
     float maxFreq = 500.0f;
 
@@ -32,7 +40,7 @@ float autocorrelation(const std::vector<float>& samples, uint32_t sampleRate) {
         float energy1 = 0.0f;
         float energy2 = 0.0f;
 
-        for (int i = 0; i + lag < samples.size(); i++) {
+        for (int i = 0; i + lag < windowSize; i++) {
 
             float a = samples[i];
             float b = samples[i + lag];
@@ -55,9 +63,44 @@ float autocorrelation(const std::vector<float>& samples, uint32_t sampleRate) {
 }
 
 
+float analyzeInput(PaStream* stream, float buffer[], 
+                AudioWindow& window, 
+                size_t bufferSize, 
+                size_t windowSize
+                ) {
+
+    Pa_ReadStream(stream, buffer, bufferSize);
+
+    for (int i = 0; i < bufferSize; i++) {
+        window.data[window.writeIndex] = buffer[i];
+        window.writeIndex = (window.writeIndex + 1) % windowSize;
+
+        if (window.filled < windowSize) window.filled++;
+    }
+
+    if (window.filled < windowSize) return 0.0f;
+
+    return autocorrelation(window.data, windowSize, 44100);
+}
+
+
+float median(std::vector<float> freqData) {
+    std::sort(freqData.begin(), freqData.end());
+
+    int n = freqData.size();
+
+    if (n % 2 == 1) {
+        return freqData[n/2];
+    }
+    
+    return 0.5f * (freqData[(n/2)-1] + freqData[n/2]);
+}
+
 //Use C style ring buffer for processing real time samples.
 //Ring buffer is faster than C++ dynamic containers and less memory heavy with embedded hardware.
 /*
+123456
+
 constexpr int N = 9;
 float history[N];
 int index = 0;

@@ -44,7 +44,11 @@ int main() {
         }
 
         if (freqData.size() == freqDataSize) {
-            stableFreq = median(freqData);
+            float m = median(freqData);
+
+            if (60 < m && m < 380) {
+                stableFreq = m;
+            }
         }
 
         BeginDrawing();

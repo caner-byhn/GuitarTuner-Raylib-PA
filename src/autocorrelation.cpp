@@ -59,7 +59,7 @@ float autocorrelation(const float* samples, size_t windowSize, uint32_t sampleRa
         }
     }
 
-    return bestLag > 0 ? static_cast<float>(sampleRate) / bestLag : 0.0f;
+    return bestLag > 0.3f ? static_cast<float>(sampleRate) / bestLag : 0.0f;
 }
 
 
@@ -71,8 +71,10 @@ float analyzeInput(PaStream* stream, float buffer[],
 
     Pa_ReadStream(stream, buffer, bufferSize);
 
+    float gain = 20.0f;
+
     for (int i = 0; i < bufferSize; i++) {
-        window.data[window.writeIndex] = buffer[i];
+        window.data[window.writeIndex] = buffer[i] * gain;
         window.writeIndex = (window.writeIndex + 1) % windowSize;
 
         if (window.filled < windowSize) window.filled++;
@@ -80,7 +82,25 @@ float analyzeInput(PaStream* stream, float buffer[],
 
     if (window.filled < windowSize) return 0.0f;
 
+    float r  = rms(window.data, windowSize);
+
+    if (r < 0.004f) {
+        std::cout << "RMS: " << r << "\n";
+        return 0.0f;
+    }
+
     return autocorrelation(window.data, windowSize, 44100);
+}
+
+
+float rms(const float* samples, size_t size) {
+    float sum = 0.0f;
+
+    for (int i = 0; i < size; i++) {
+        sum += samples[i] * samples[i];
+    }
+
+    return sqrtf(sum / size);
 }
 
 

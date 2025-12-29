@@ -17,9 +17,9 @@ int main() {
 
     PaStream* stream = inputStream();
     
-    const size_t windowSize = 2048;
+    const size_t windowSize = 4096;
     const size_t bufferSize = 512;
-    const size_t freqDataSize = 10;
+    const size_t freqDataSize = 15;
 
     AudioWindow window(windowSize);
     float buffer[bufferSize];
@@ -29,6 +29,8 @@ int main() {
     int index = 0;
 
     float stableFreq = 0.0f;
+    float smoothingFactor = 0.2f;
+    float threshold = 0.5f;
 
 
     while(!WindowShouldClose()) {
@@ -46,8 +48,8 @@ int main() {
         if (freqData.size() == freqDataSize) {
             float m = median(freqData);
 
-            if (60 < m && m < 380) {
-                stableFreq = m;
+            if (std::abs(m - stableFreq) > threshold) {
+                stableFreq = stableFreq * (1.0f - smoothingFactor) + m * smoothingFactor;
             }
         }
 

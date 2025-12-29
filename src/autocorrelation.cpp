@@ -82,14 +82,19 @@ float analyzeInput(PaStream* stream, float buffer[],
 
     if (window.filled < windowSize) return 0.0f;
 
-    float r  = rms(window.data, windowSize);
+    std::vector<float> temp(windowSize);
 
-    if (r < 0.004f) {
+    for (size_t i = 0; i < windowSize; i++) {
+        temp[i] = window.data[(window.writeIndex + i) % windowSize];
+    }
+
+    float r  = rms(temp.data(), windowSize);
+    if (r < 0.015f) {
         std::cout << "RMS: " << r << "\n";
         return 0.0f;
     }
 
-    return autocorrelation(window.data, windowSize, 44100);
+    return autocorrelation(temp.data(), windowSize, 44100);
 }
 
 

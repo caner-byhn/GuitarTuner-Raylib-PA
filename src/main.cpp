@@ -26,6 +26,8 @@ int main() {
     float buffer[bufferSize];
     HzRingBuffer hzBuffer(freqDataSize);
     float hz;
+
+    TuningResult result;
     
     while(!WindowShouldClose()) {
 
@@ -34,10 +36,20 @@ int main() {
         hzBuffer.push(hz);
         float cleanHz = hzBuffer.smoothing();
 
+        result = getPitch(cleanHz);
+        std::string instruction = " ";
+
+        if (std::abs(result.cents) < 10.0f) instruction = "IN TUNE";
+        else if (result.cents > 0) instruction = "TUNE DOWN";
+        else instruction = "TUNE UP";
+
         BeginDrawing();
             ClearBackground(BLACK);
 
-            DrawText(TextFormat("%.1f", cleanHz), 320, 260, 60, WHITE);
+            DrawText(TextFormat("%.1f", cleanHz), 320, 240, 60, WHITE);
+            DrawText(TextFormat("%s%d", result.note.c_str(), result.octave),
+                    320, 310, 60, WHITE);
+            DrawText(instruction.c_str(), 240, 380, 60, WHITE);
 
         EndDrawing();
     }

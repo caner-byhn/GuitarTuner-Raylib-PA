@@ -24,33 +24,26 @@ AudioWindow::~AudioWindow(){
 }
 
 
-HzRingBuffer::HzRingBuffer(size_t freqDataSize) : size(freqDataSize), index(0), stable(0.0f){}
+HzRingBuffer::HzRingBuffer(size_t freqDataSize) : size(freqDataSize), index(0), stable(0.0f) {
+    data.resize(size, 0.0f);
+}
 
 void HzRingBuffer::push(float hz){
-    if (hz != 0.0f && data.size() < size) {
-            data.push_back(hz);
-        }
-    else if (hz != 0.0f) {
-        data[index] = hz;
-        index = (index + 1) % size;
-    }
+    if (hz <= 0.0f) return;
+
+    data[index] = hz;
+    index = (index + 1) % size;
 }
 
 float HzRingBuffer::smoothing(){
-    float smoothingFactor = 0.2f;
-    float threshold = 0.5f;
+    float smoothingFactor = 0.15f; // Slower for guitar stability
+    float threshold = 0.3f;        // Minimum Hz change to trigger update
 
-    if (data.size() == size) {
-        float m = median(data);
-
-        if (std::abs(m - stable) > threshold) {
-            stable = stable * (1.0f - smoothingFactor) + m * smoothingFactor;
-        }
-
-        return stable;
+    float m = median(data);
+    if (std::abs(m - stable) > threshold) {
+        stable = stable * (1.0f - smoothingFactor) + m * smoothingFactor;
     }
-
-    return 0.0f;
+    return stable;
 }
 
 
@@ -149,6 +142,32 @@ float median(std::vector<float> freqData) {
     }
     
     return 0.5f * (freqData[(n/2)-1] + freqData[n/2]);
+}
+
+
+TuningResult getPitch(float freq) {
+    constexpr float A4 = 440.0f;
+    constexpr const char* noteNames[12] = {
+        "C", "C#", "D", "D#", "E", "F",
+        "F#", "G", "G#", "A", "A#", "B"
+    };
+
+    float n = 12.0f * std::log2(freq / A4);
+    int nearest = static_cast<int>(std::round(n));
+
+    int midi = 69 + nearest;
+    int noteIndex = midi % 12;
+    int octave = midi / 12 - 1;
+
+    float targetFreq = A4 * std::pow(2.0f, nearest / 12.0f);
+    float cents = 1200.0f * std::log2(freq / targetFreq);
+
+    return {
+        noteNames[noteIndex],
+        octave,
+        cents,
+        targetFreq
+    };
 }
 
 //Use C style ring buffer for processing real time samples.

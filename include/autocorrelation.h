@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <string>
 #include "portaudio.h"
 
 struct AudioWindow {
@@ -25,9 +26,17 @@ struct HzRingBuffer {
     float smoothing();
 };
 
+struct TuningResult {
+    std::string note = " ";
+    int octave = 1;
+    float cents;
+    float targetFreq;
+};
+
 
 float autocorrelation(const std::vector<float>& samples, uint32_t sampleRate);
 float analyzeInput(PaStream* stream, float buffer[], AudioWindow& window, size_t bufferSize, size_t windowSize);
 float rms(const float* samples, size_t size);
 void hzData(std::vector<float>& freqData, size_t freqDataSize, float hz);
 float median(std::vector<float> freqData);
+TuningResult getPitch(float freq);

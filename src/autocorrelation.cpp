@@ -24,6 +24,36 @@ AudioWindow::~AudioWindow(){
 }
 
 
+HzRingBuffer::HzRingBuffer(size_t freqDataSize) : size(freqDataSize), index(0), stable(0.0f){}
+
+void HzRingBuffer::push(float hz){
+    if (hz != 0.0f && data.size() < size) {
+            data.push_back(hz);
+        }
+    else if (hz != 0.0f) {
+        data[index] = hz;
+        index = (index + 1) % size;
+    }
+}
+
+float HzRingBuffer::smoothing(){
+    float smoothingFactor = 0.2f;
+    float threshold = 0.5f;
+
+    if (data.size() == size) {
+        float m = median(data);
+
+        if (std::abs(m - stable) > threshold) {
+            stable = stable * (1.0f - smoothingFactor) + m * smoothingFactor;
+        }
+
+        return stable;
+    }
+
+    return 0.0f;
+}
+
+
 float autocorrelation(const float* samples, size_t windowSize, uint32_t sampleRate) {
     float minFreq = 60.0f;
     float maxFreq = 500.0f;

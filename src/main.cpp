@@ -11,6 +11,7 @@
 int main() {
     constexpr int screenWidth = 800;
     constexpr int screenHeight = 600;
+
     InitWindow(screenWidth, screenHeight, "Guitar Tuner");
     SetTargetFPS(60);
     paInit();
@@ -23,40 +24,20 @@ int main() {
 
     AudioWindow window(windowSize);
     float buffer[bufferSize];
-
-    std::vector<float> freqData;
+    HzRingBuffer hzBuffer(freqDataSize);
     float hz;
-    int index = 0;
-
-    float stableFreq = 0.0f;
-    float smoothingFactor = 0.2f;
-    float threshold = 0.5f;
-
-
+    
     while(!WindowShouldClose()) {
 
         hz = analyzeInput(stream, buffer, window, bufferSize, windowSize);
 
-        if (hz != 0.0f && freqData.size() < freqDataSize) {
-            freqData.push_back(hz);
-        }
-        else if (hz != 0.0f) {
-            freqData[index] = hz;
-            index = (index + 1) % freqDataSize;
-        }
-
-        if (freqData.size() == freqDataSize) {
-            float m = median(freqData);
-
-            if (std::abs(m - stableFreq) > threshold) {
-                stableFreq = stableFreq * (1.0f - smoothingFactor) + m * smoothingFactor;
-            }
-        }
+        hzBuffer.push(hz);
+        float cleanHz = hzBuffer.smoothing();
 
         BeginDrawing();
             ClearBackground(BLACK);
 
-            DrawText(TextFormat("%.1f", stableFreq), 320, 260, 60, WHITE);
+            DrawText(TextFormat("%.1f", cleanHz), 320, 260, 60, WHITE);
 
         EndDrawing();
     }
